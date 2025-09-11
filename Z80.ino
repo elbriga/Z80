@@ -1,82 +1,62 @@
-#include <SPI.h>
 #include "z80.h"
+#include "ROM.h"
 
-// SPI = 4 x 74165 > 32 inputs + 1 x 74595 > 8 outputs
-#define DATA_OUTPUT_ENABLE_PIN 1
-#define SPI_OUT_LATCH_PIN      2
-#define SPI_IN_LATCH_PIN       3
-#define LED_PIN                8
-// SCK  -> GPIO4
-// MISO -> GPIO5
-// MOSI -> GPIO6
-
-#define SPI_CLOCK 10000000 // 10 MHz
-SPISettings settings595(SPI_CLOCK, MSBFIRST, SPI_MODE0); // para o 74HC595
-SPISettings settings165(SPI_CLOCK, MSBFIRST, SPI_MODE2); // para o 74LS165
+#define LED_PIN 8
 
 Z80 Z80;
 
-uint32_t transferDataSPI(uint8_t dataOut)
-{
-  uint8_t control, addrH, addrL, dataIN;
-  
-  // --- LER DOS 165 (MODE2) ---
-  SPI.beginTransaction(settings165);
-  digitalWrite(SPI_IN_LATCH_PIN, LOW);
-  digitalWrite(SPI_IN_LATCH_PIN, HIGH);
-  // delayMicroseconds(1);
-  dataIN  = SPI.transfer(0x00);
-  addrL   = SPI.transfer(0x00);
-  addrH   = SPI.transfer(0x00);
-  control = SPI.transfer(0x00);
-  SPI.endTransaction();
-
-  // --- ESCREVER NO 595 (MODE0) ---
-  // delayMicroseconds(1);
-  SPI.beginTransaction(settings595);
-  SPI.transfer(dataOut);
-  SPI.endTransaction();
-
-  digitalWrite(SPI_OUT_LATCH_PIN, LOW);
-  digitalWrite(SPI_OUT_LATCH_PIN, HIGH);
-
-  return (control << 24) + (addrH << 16) + (addrL << 8) + dataIN;
-}
-
 void setup() {
   Serial.begin(115200);
-  
-  pinMode(LED_PIN,                OUTPUT);
-  pinMode(DATA_OUTPUT_ENABLE_PIN, OUTPUT);
-  pinMode(SPI_OUT_LATCH_PIN,      OUTPUT);
-  pinMode(SPI_IN_LATCH_PIN,       OUTPUT);
-
-  digitalWrite(DATA_OUTPUT_ENABLE_PIN, HIGH);
-  digitalWrite(SPI_OUT_LATCH_PIN,      HIGH);
-  digitalWrite(SPI_IN_LATCH_PIN,       HIGH);
-
-  SPI.begin();
-  // SPI.setFrequency(1000000);  // 1 MHz
-  // SPI.setDataMode(SPI_MODE2); // 74LS165 trabalha em modo 2
+  pinMode(LED_PIN, OUTPUT);
 
   Z80.begin();
-  
-  Serial.println("\nInit!");
-
-  Serial.println("Z80 Reset");
   Z80.reset();
+
+  Serial.println("\nInit!");
 }
 
-uint8_t out = 0, led = 0;
+uint8_t led = 0, cnt = 0;
 void loop() {
-  uint32_t in = transferDataSPI(out++);
+  // if (cnt++ >= 20) {
+  //   cnt = 0;
+  //   Z80.reset();
+  //   Serial.println("\n\n\n>>> RESET!");
+  // }
 
-  Serial.print(in, BIN);
-  Serial.print(" : ");
-  Serial.println(out);
+  Z80.cycle(); // clock > readPins > printPins
+
+  if (!(Z80.controlPins & Z80_MREQ_BIT)) { // Memory Request
+    if (!(Z80.controlPins & Z80_RD_BIT)) { // READ
+      uint8_t data = 0xFF; // valor default
+      if (Z80.address < Z80_ROM_len) {
+        data = Z80_ROM[Z80.address];
+      }
+
+      Serial.print("> READ ");
+      Serial.print(Z80.address, HEX);
+      Serial.print(" = ");
+      Serial.println(data, HEX);
+
+      Z80.writeDataOut(data);                     // coloca no barramento
+
+      digitalWrite(DATA_OUTPUT_ENABLE_PIN, LOW);  // habilita saídas
+      Z80.cycle(" **");                           // deixa CPU capturar
+      Z80.cycle(" **2");
+      digitalWrite(DATA_OUTPUT_ENABLE_PIN, HIGH); // solta o barramento
+    }
+    
+    else if (!(Z80.controlPins & Z80_WR_BIT)) { // WRITE
+      Serial.println("> WRITE!");
+    }
+    
+    else {
+      // INVALIDO!
+      Serial.println("> SOh MREQ??");
+    }
+  }
 
   led = 1 - led;
   digitalWrite(LED_PIN, led);
 
-  delay(500);
+  delay(1000);
 }

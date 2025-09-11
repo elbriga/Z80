@@ -16,13 +16,31 @@
 #define Z80_M1_BIT          32
 #define Z80_RFSH_BIT        64
 
+// SPI = 4 x 74165 > 32 inputs + 1 x 74595 > 8 outputs
+#define DATA_OUTPUT_ENABLE_PIN 1
+#define SPI_OUT_LATCH_PIN      2
+#define SPI_IN_LATCH_PIN       3
+// SCK  -> GPIO4
+// MISO -> GPIO5
+// MOSI -> GPIO6
+
 class Z80 {
 private:
-  bool ativa;
+  bool dummy;
 
 public:
+  uint16_t address;
+  uint8_t  controlPins, dataIN; // lidos por SPI dos 74165
+
   Z80();
 
   void begin();
+  void cycle(String tag="");
+  void printPins(String tag="");
+
+  void readPins();
+  void writeDataOut(uint8_t dataOut);
+
   void reset();
+  void clock(int num=1);
 };
