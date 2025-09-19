@@ -36,7 +36,7 @@ void Z80::printPins(String tag) {
 
 void Z80::cycle(String tag) {
   clock(1);
-  readPins(); // le controlPins + address + dataIN
+  //readPins(); // le controlPins + address + dataIN
   printPins(tag);
 }
 
@@ -114,6 +114,9 @@ void Z80::clock(int num) {
   for (int i=0; i<num; i++) {
     digitalWrite(Z80_CLOCK_PIN, HIGH);
     delayMicroseconds(Z80_DELAY_uS_CLOCK);
+
+    readPins(); // le controlPins + address + dataIN
+
     digitalWrite(Z80_CLOCK_PIN, LOW);
     delayMicroseconds(Z80_DELAY_uS_CLOCK);
   }

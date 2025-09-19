@@ -47,6 +47,7 @@ void loop() {
       Z80.cycle(" **");                           // deixa CPU capturar
       Z80.cycle(" **2");
       digitalWrite(DATA_OUTPUT_ENABLE_PIN, HIGH); // solta o barramento
+      delayMicroseconds(1);
     }
     
     else if (!(Z80.controlPins & Z80_WR_BIT)) { // WRITE
@@ -67,5 +68,5 @@ void loop() {
   led = 1 - led;
   digitalWrite(LED_PIN, led);
 
-  delay(10);
+  // delay(1000);
 }
