@@ -13,15 +13,17 @@ void setup() {
   Z80.reset();
 
   Serial.println("\nInit!");
+  delay(1000);
 }
 
 uint8_t led = 0, cnt = 0;
 void loop() {
-  // if (cnt++ >= 20) {
-  //   cnt = 0;
-  //   Z80.reset();
-  //   Serial.println("\n\n\n>>> RESET!");
-  // }
+  if (cnt++ >= 40) {
+    cnt = 0;
+    Z80.reset();
+    Serial.println("\n\n\n>>> RESET!");
+    delay(1000);
+  }
 
   Z80.cycle(); // clock > readPins > printPins
 
@@ -30,6 +32,8 @@ void loop() {
       uint8_t data = 0xFF; // valor default
       if (Z80.address < Z80_ROM_len) {
         data = Z80_ROM[Z80.address];
+      } else {
+        data = Z80.readRAM();
       }
 
       Serial.print("> READ ");
@@ -46,7 +50,12 @@ void loop() {
     }
     
     else if (!(Z80.controlPins & Z80_WR_BIT)) { // WRITE
-      Serial.println("> WRITE!");
+      Serial.print("> WRITE ");
+      Serial.print(Z80.address, HEX);
+      Serial.print(" = ");
+      Serial.println(Z80.dataIN, HEX);
+
+      Z80.writeRAM();
     }
     
     else {
@@ -58,5 +67,5 @@ void loop() {
   led = 1 - led;
   digitalWrite(LED_PIN, led);
 
-  delay(1000);
+  delay(10);
 }

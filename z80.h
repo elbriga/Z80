@@ -26,7 +26,7 @@
 
 class Z80 {
 private:
-  bool dummy;
+  uint8_t RAM[65536]; // 64K de RAM
 
 public:
   uint16_t address;
@@ -40,6 +40,9 @@ public:
 
   void readPins();
   void writeDataOut(uint8_t dataOut);
+  
+  void writeRAM();
+  uint8_t readRAM();
 
   void reset();
   void clock(int num=1);

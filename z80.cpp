@@ -3,7 +3,7 @@
 
 #include "z80.h"
 
-#define SPI_CLOCK 10000000 // 10 MHz
+#define SPI_CLOCK 1000000 // 10 MHz
 SPISettings settings595(SPI_CLOCK, MSBFIRST, SPI_MODE0); // para o 74HC595
 SPISettings settings165(SPI_CLOCK, MSBFIRST, SPI_MODE2); // para o 74LS165
 
@@ -18,6 +18,12 @@ void Z80::printPins(String tag) {
   Serial.print(controlPins & Z80_MREQ_BIT ? 1 : 0);
   Serial.print(" IORQ:");
   Serial.print(controlPins & Z80_IORQ_BIT ? 1 : 0);
+  Serial.print(" M1:");
+  Serial.print(controlPins & Z80_M1_BIT ? 1 : 0);
+  Serial.print(" RFSH:");
+  Serial.print(controlPins & Z80_RFSH_BIT ? 1 : 0);
+  Serial.print(" HALT:");
+  Serial.print(controlPins & Z80_HALT_BIT ? 1 : 0);
 
   Serial.print(" ADDR:");
   Serial.print(address, HEX);
@@ -88,10 +94,18 @@ void Z80::writeDataOut(uint8_t dataOut) {
   digitalWrite(SPI_OUT_LATCH_PIN, HIGH);
 }
 
+void Z80::writeRAM() {
+  RAM[address] = dataIN;
+}
+
+uint8_t Z80::readRAM() {
+  return RAM[address];
+}
+
 void Z80::reset() {
   digitalWrite(Z80_RESET_PIN, LOW);
   // pulsar o clock durante o reset, no minimo 3 vezes
-  clock(20);
+  clock(4);
   digitalWrite(Z80_RESET_PIN, HIGH);
 }
 
