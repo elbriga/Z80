@@ -18,7 +18,7 @@ void setup() {
 
 uint8_t led = 0, cnt = 0;
 void loop() {
-  if (cnt++ >= 40) {
+  if (cnt++ >= 64) {
     cnt = 0;
     Z80.reset();
     Serial.println("\n\n\n>>> RESET!");
@@ -37,6 +37,9 @@ void loop() {
       }
 
       Serial.print("> READ ");
+      if (!(Z80.controlPins & Z80_M1_BIT)) {
+        Serial.print("OPCODE ");
+      }
       Serial.print(Z80.address, HEX);
       Serial.print(" = ");
       Serial.println(data, HEX);
